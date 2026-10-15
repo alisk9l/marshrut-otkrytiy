@@ -1,0 +1,4 @@
+export const isValidPuzzle = (order:unknown):order is number[] => Array.isArray(order)&&order.length===9&&new Set(order).size===9&&order.every(n=>Number.isInteger(n)&&n>=0&&n<9);
+export const swapTiles = (order:number[],a:number,b:number):number[] => {if(!isValidPuzzle(order)||!Number.isInteger(a)||!Number.isInteger(b)||a<0||b<0||a>8||b>8)return [...order];const result=[...order];[result[a],result[b]]=[result[b],result[a]];return result;};
+export const isSolvedPuzzle = (order:number[]):boolean => isValidPuzzle(order)&&order.every((tile,index)=>tile===index);
+export const shuffledPuzzle = ():number[] => {const order=[0,1,2,3,4,5,6,7,8];for(let i=8;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}if(isSolvedPuzzle(order))[order[0],order[1]]=[order[1],order[0]];return order;};

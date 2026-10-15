@@ -1,0 +1,25 @@
+import {useEffect,useRef,useState,type ReactNode} from 'react';
+import {ArrowRight,BookOpen,Camera,Check,Leaf,MapPin,Puzzle,Sparkles,X} from 'lucide-react';
+import {photoUrl,sources} from '../data/photos';
+import {Logo} from './Logo';
+import type {Location,LocationId} from '../data/types';
+import {useProgress} from '../features/progress/ProgressProvider';
+export function LinkButton({to,children,secondary=false,className=''}:{to:string;children:ReactNode;secondary?:boolean;className?:string}){return <a className={`button ${secondary?'secondary':''} ${className}`} href={'#'+to}>{children}{!secondary&&<ArrowRight size={18}/>}</a>;}
+export function Eyebrow({children}:{children:ReactNode}){return <p className="eyebrow">{children}</p>;}
+export function StampIcon({id,size=32}:{id:LocationId;size?:number}){const Icon=id==='garden'||id==='steppe'?Leaf:id==='monument'?BookOpen:id==='museum'?Sparkles:Puzzle;return <Icon size={size} strokeWidth={1.4}/>;}
+export function ProgressBar({value,label}:{value:number;label?:string}){return <div className="progress-group">{label&&<div className="progress-label">{label}<span>{Math.round(value)}%</span></div>}<div className="progress-track" role="progressbar" aria-label={label??'Прогресс маршрута'} aria-valuenow={value} aria-valuemin={0} aria-valuemax={100}><span style={{width:value+'%'}}/></div></div>;}
+export function Photo({id,alt,className='',priority=false,small=false,onError,onLoad}:{id:number;alt:string;className?:string;priority?:boolean;small?:boolean;onError?:()=>void;onLoad?:()=>void}){
+ const [failed,setFailed]=useState(false);const [attempt,setAttempt]=useState(0);useEffect(()=>{setFailed(false);},[id]);
+ if(failed)return <div className={'photo-error '+className}><Camera size={28}/><p>Фото не загрузилось</p><button className="text-button" onClick={()=>{setFailed(false);setAttempt(a=>a+1);}}>Попробовать снова</button></div>;
+ return <img key={attempt} src={photoUrl(id,small)} alt={alt} className={className} loading={priority?'eager':'lazy'} fetchPriority={priority?'high':'auto'} decoding="async" onLoad={onLoad} onError={()=>{setFailed(true);onError?.();}}/>;
+}
+export function PhotoCreditLine(_props:{id:number}){return null;}
+export function SourceLink({id}:{id:string}){const source=sources[id as keyof typeof sources];return source?<a className="source-link" href={source.url} target="_blank" rel="noreferrer"><BookOpen size={14}/>Источник: {source.title}</a>:null;}
+export function Modal({title,children,onClose,className=''}:{title:string;children:ReactNode;onClose:()=>void;className?:string}){
+ const dialog=useRef<HTMLDialogElement>(null);useEffect(()=>{const previous=document.activeElement as HTMLElement|null;const d=dialog.current;d?.showModal();return()=>{d?.close();previous?.focus();};},[]);
+ return <dialog ref={dialog} className={'modal '+className} aria-labelledby="modal-title" onCancel={e=>{e.preventDefault();onClose();}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}><div className="modal-body"><div className="modal-heading"><h2 id="modal-title">{title}</h2><button className="icon-button" onClick={onClose} aria-label="Закрыть окно"><X/></button></div>{children}</div></dialog>;
+}
+export function LocationCard({location,index}:{location:Location;index:number}){const {progress}=useProgress();const done=progress.stampLocationIds.includes(location.id);return <a className="location-card" href={'#/locations/'+location.id}><div className="card-photo"><Photo id={location.heroPhotoId} alt={location.title} small/><span className="photo-number">0{index+1}</span>{done&&<span className="card-done"><Check size={14}/>Штамп получен</span>}</div><div className="card-copy"><div className="meta"><span>{location.theme}</span><span>{location.durationMinutes} мин</span></div><h3>{location.title}</h3><p>{location.description}</p><div className="card-bottom"><span>{done?'Открыть снова':'Исследовать'}</span><ArrowRight size={20}/></div></div></a>;}
+export function Header({route}:{route:string}){const {progress}=useProgress();return <header className="header"><a className="brand" href="#/" aria-label="Маршрут открытий — главная"><Logo size={52}/><span>Маршрут <small>открытий</small></span></a><nav aria-label="Основное меню"><a className={route==='/map'||route.startsWith('/locations')?'active':''} href="#/map">Карта</a><a className={route==='/passport'?'active':''} href="#/passport">Паспорт <span className="nav-count">{progress.stampLocationIds.length}/5</span></a><a className={route==='/about'?'active':''} href="#/about">О проекте</a></nav><a className="header-help" href="#/how-to-play" aria-label="Как играть"><BookOpen size={20}/></a></header>;}
+export function Footer(){return <footer className="footer"><span><Logo size={28}/>Маршрут открытий</span><span>Образовательная игровая экспедиция</span><a href="#/sources">Материалы и источники</a></footer>;}
+export function Breadcrumb({location}:{location?:Location}){return <div className="breadcrumb"><a href="#/map"><MapPin size={14}/>Карта маршрута</a>{location&&<><span>/</span><span>{location.title}</span></>}</div>;}
